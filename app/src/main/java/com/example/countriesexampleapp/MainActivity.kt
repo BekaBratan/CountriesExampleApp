@@ -4,9 +4,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ColorScheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -17,6 +26,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.AlignmentLine
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import retrofit2.Retrofit
@@ -32,6 +43,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+
 @Composable
 fun CountryApp(){
     val retrofit = Retrofit.Builder()
@@ -43,30 +55,64 @@ fun CountryApp(){
 
     var countryDataResponse by remember { mutableStateOf<Data?>(null) }
     var errorDataResponse by remember { mutableStateOf<String?>(null) }
+    var countryName by remember { mutableStateOf<String>("") }
+    var showCountry by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
-    LaunchedEffect(Unit) {
-        coroutineScope.launch(Dispatchers.IO){
-            try {
-                val response = services.getCountry()
-                countryDataResponse = response.data
-            } catch (e: Exception){
-                errorDataResponse = e.localizedMessage
+    if (showCountry){
+        LaunchedEffect(Unit) {
+            coroutineScope.launch(Dispatchers.IO){
+                try {
+                    val response = services.getCountry(countryName)
+                    countryDataResponse = response.data
+                } catch (e: Exception){
+                    errorDataResponse = e.localizedMessage
+                }
             }
         }
     }
 
-    if (countryDataResponse!=null){
-        CountryScreen(countryData = countryDataResponse!!)
-    }else if (errorDataResponse!=null){
-        Text("Error: $errorDataResponse")
-    }else{
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ){
-            CircularProgressIndicator()
+    Column(
+        modifier = Modifier.fillMaxSize().padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        if (countryDataResponse!=null){
+            CountryScreen(countryData = countryDataResponse!!)
+            showCountry = false
+        }else if (errorDataResponse!=null){
+            Text("Error: $errorDataResponse")
+            showCountry = false
+        }else if (showCountry){
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ){
+                CircularProgressIndicator()
+            }
+
+            Spacer(modifier = Modifier.size(16.dp))
+        }
+
+        OutlinedTextField(
+            value = countryName,
+            onValueChange = { countryName = it },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            label = { Text("Country name") }
+        )
+
+        Button(
+            onClick = {
+                showCountry = true
+                countryDataResponse = null
+                errorDataResponse = null
+            },
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text("Search")
         }
     }
 }
