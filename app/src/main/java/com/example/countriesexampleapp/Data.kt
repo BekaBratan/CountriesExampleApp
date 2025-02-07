@@ -3,7 +3,7 @@ import com.google.gson.annotations.SerializedName
 
 data class Data(
     @SerializedName("area")
-    val area: Int,
+    val area: Double,
     @SerializedName("borders")
     val borders: List<String>,
     @SerializedName("capital")

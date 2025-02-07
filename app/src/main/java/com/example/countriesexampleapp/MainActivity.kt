@@ -54,9 +54,11 @@ fun CountryApp(){
     val services = retrofit.create(CountryExampleService::class.java)
 
     var countryDataResponse by remember { mutableStateOf<Data?>(null) }
+    var countriesDataResponse by remember { mutableStateOf<List<Data>?>(null) }
     var errorDataResponse by remember { mutableStateOf<String?>(null) }
     var countryName by remember { mutableStateOf<String>("") }
     var showCountry by remember { mutableStateOf(false) }
+    var showCountries by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -71,20 +73,47 @@ fun CountryApp(){
                 }
             }
         }
+    } else if (showCountries){
+        LaunchedEffect(Unit) {
+            coroutineScope.launch(Dispatchers.IO){
+                try {
+                    val response = services.getCountries()
+                    countriesDataResponse = response.data
+                } catch (e: Exception){
+                    errorDataResponse = e.localizedMessage
+                }
+            }
+        }
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
+        modifier = Modifier.fillMaxSize().padding(16.dp, 48.dp, 16.dp, 16.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         if (countryDataResponse!=null){
             CountryScreen(countryData = countryDataResponse!!)
             showCountry = false
+            showCountries = false
+        }else if (countriesDataResponse!=null){
+            Button(
+                onClick = {
+                    countryDataResponse = null
+                    countriesDataResponse = null
+                    errorDataResponse = null
+                },
+                modifier = Modifier.align(Alignment.End)
+            ) {
+                Text("Back")
+            }
+            CountriesScreen(countriesData = countriesDataResponse!!)
+            showCountry = false
+            showCountries = false
         }else if (errorDataResponse!=null){
             Text("Error: $errorDataResponse")
             showCountry = false
-        }else if (showCountry){
+            showCountries = false
+        }else if (showCountry || showCountries){
             Box(
                 modifier = Modifier.fillMaxWidth(),
                 contentAlignment = Alignment.Center
@@ -95,24 +124,37 @@ fun CountryApp(){
             Spacer(modifier = Modifier.size(16.dp))
         }
 
-        OutlinedTextField(
-            value = countryName,
-            onValueChange = { countryName = it },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            label = { Text("Country name") }
-        )
+        if (countriesDataResponse==null){
+            OutlinedTextField(
+                value = countryName,
+                onValueChange = { countryName = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                label = { Text("Country name") }
+            )
 
-        Button(
-            onClick = {
-                showCountry = true
-                countryDataResponse = null
-                errorDataResponse = null
-            },
-            modifier = Modifier.padding(16.dp)
-        ) {
-            Text("Search")
+            Button(
+                onClick = {
+                    showCountry = true
+                    countryDataResponse = null
+                    countriesDataResponse = null
+                    errorDataResponse = null
+                }
+            ) {
+                Text("Search")
+            }
+
+            Button(
+                onClick = {
+                    showCountries = true
+                    countryDataResponse = null
+                    countriesDataResponse = null
+                    errorDataResponse = null
+                }
+            ) {
+                Text("Show All Countries")
+            }
         }
     }
 }

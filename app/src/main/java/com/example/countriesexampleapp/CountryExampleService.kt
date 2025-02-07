@@ -12,4 +12,7 @@ interface CountryExampleService {
     suspend fun getCountry(
         @Path("name") countryName: String
     ): CountryServiceResponse
+
+    @GET(COUNTRY_URL)
+    suspend fun getCountries(): CountriesServiceResponse
 }
